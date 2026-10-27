@@ -1,35 +1,50 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_macros.html" import status_badge, status_track, fmt_date %}
+
+{% block title %}Мои справки · Справки колледжа{% endblock %}
 
 {% block content %}
 <div class="dashboard">
-    <h2>📋 Мои заказанные справки</h2>
-    <p class="page-description">Здесь вы можете отслеживать статус всех заказанных справок</p>
-    
+    <div class="page-head">
+        <div>
+            <p class="section-kicker">Мониторинг</p>
+            <h1>{{ icon('list', 26) }} Мои справки</h1>
+            <p class="page-description">Отслеживайте готовность всех заказанных справок</p>
+        </div>
+        <div class="page-head__actions">
+            <a href="{{ url_for('order_certificate') }}" class="btn btn-primary">{{ icon('plus', 18) }} Заказать справку</a>
+        </div>
+    </div>
+
     <div class="filters">
-        <form method="GET" action="{{ url_for('student_dashboard') }}" class="search-form">
-            <input type="text" name="search" value="{{ search }}" placeholder="Поиск по ФИО...">
-            <button type="submit" class="btn btn-primary">Найти</button>
+        <form method="GET" action="{{ url_for('student_dashboard') }}" class="search-form" role="search">
+            <div class="search-input-wrap">
+                {{ icon('search', 17) }}
+                <input type="search" name="search" value="{{ search }}" placeholder="Поиск по ФИО..." aria-label="Поиск по ФИО">
+            </div>
+            <button type="submit" class="btn btn-primary btn-small">Найти</button>
             {% if search %}
-                <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Сбросить</a>
+                <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary btn-small">{{ icon('x-circle', 16) }} Сбросить</a>
             {% endif %}
         </form>
     </div>
 
     <div class="stats">
-        <div class="stat-card">
-            <h3>Всего справок</h3>
+        <div class="stat-card stat-card--total">
+            <h3>{{ icon('layers', 16) }} Всего</h3>
             <span>{{ certificates|length }}</span>
         </div>
-        <div class="stat-card">
-            <h3>В работе</h3>
+        <div class="stat-card stat-card--work">
+            <h3>{{ icon('clock', 16) }} В работе</h3>
             <span>{{ certificates|selectattr('status', 'equalto', 'в работе')|list|length }}</span>
         </div>
-        <div class="stat-card">
-            <h3>Готово</h3>
+        <div class="stat-card stat-card--ready">
+            <h3>{{ icon('check-circle', 16) }} Готово</h3>
             <span>{{ certificates|selectattr('status', 'equalto', 'готово')|list|length }}</span>
         </div>
-        <div class="stat-card">
-            <h3>Отклонено</h3>
+        <div class="stat-card stat-card--rejected">
+            <h3>{{ icon('x-circle', 16) }} Отклонено</h3>
             <span>{{ certificates|selectattr('status', 'equalto', 'отклонено')|list|length }}</span>
         </div>
     </div>
@@ -37,30 +52,56 @@
     {% if certificates %}
     <div class="certificates-list">
         {% for cert in certificates %}
-        <div class="certificate-card status-{{ cert.status.replace(' ', '-') }}">
+        <article class="certificate-card" data-status="{{ cert.status }}">
             <div class="certificate-header">
-                <h3>Справка #{{ cert.id }}</h3>
-                <span class="status-badge">{{ cert.status }}</span>
+                <h3><span class="hash">#</span>{{ cert.id }}</h3>
+                {{ status_badge(cert.status) }}
             </div>
+
+            {{ status_track(cert.status) }}
+
             <div class="certificate-info">
-                <p><strong>Студент:</strong> {{ cert.student_name }}</p>
-                <p><strong>Группа:</strong> {{ cert.student_group }}</p>
-                <p><strong>Дата рождения:</strong> {{ cert.birth_date }}</p>
-                <p><strong>Место требования:</strong> {{ cert.request_place }}</p>
-                <p><strong>Количество:</strong> {{ cert.quantity }} шт.</p>
+                <p class="cert-full">
+                    <strong>Студент</strong>
+                    {{ cert.student_name }}
+                </p>
+                <p>
+                    <strong>Группа</strong>
+                    {{ cert.student_group }}
+                </p>
+                <p>
+                    <strong>Дата рождения</strong>
+                    {{ fmt_date(cert.birth_date) }}
+                </p>
+                <p>
+                    <strong>Количество</strong>
+                    {{ cert.quantity }} шт.
+                </p>
+                <p>
+                    <strong>Место требования</strong>
+                    {{ cert.request_place }}
+                </p>
                 {% if cert.comment %}
-                <p><strong>Комментарий:</strong> {{ cert.comment }}</p>
+                <p class="cert-full">
+                    <strong>Комментарий</strong>
+                    {{ cert.comment }}
+                </p>
                 {% endif %}
-                <p><strong>Дата заказа:</strong> {{ cert.created_at }}</p>
+                <p class="cert-dates">Заказано: {{ cert.created_at }}{% if cert.updated_at != cert.created_at %} · обновлено: {{ cert.updated_at }}{% endif %}</p>
             </div>
-        </div>
+        </article>
         {% endfor %}
     </div>
     {% else %}
     <div class="empty-state">
-        <h3>Справок не найдено</h3>
-        <p>Закажите первую справку или измените параметры поиска</p>
-        <a href="{{ url_for('order_certificate') }}" class="btn btn-primary">Заказать справку</a>
+        <div class="empty-state__icon">{{ icon('inbox', 30) }}</div>
+        <h3>{% if search %}Ничего не найдено{% else %}Справок пока нет{% endif %}</h3>
+        <p>{% if search %}Попробуйте изменить запрос или сбросить фильтр.{% else %}Закажите первую справку — это займёт меньше минуты.{% endif %}</p>
+        {% if search %}
+            <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Сбросить поиск</a>
+        {% else %}
+            <a href="{{ url_for('order_certificate') }}" class="btn btn-primary">{{ icon('plus', 18) }} Заказать справку</a>
+        {% endif %}
     </div>
     {% endif %}
 </div>

@@ -1,29 +1,85 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 
 {% block content %}
-<div class="hero">
+<section class="hero">
     <div class="hero-content">
-        <h1>Система мониторинга готовности справок</h1>
-        <p>Закажите справку и отслеживайте её статус в реальном времени</p>
+        <span class="eyebrow"><span class="dot"></span>Статус обновляется онлайн</span>
+        <h1>Справки без очередей<br><span class="accent">и лишних звонков</span></h1>
+        <p class="hero-lead">Закажите справку за минуту и следите за её готовностью в реальном времени — от заявки до выдачи в секретариате.</p>
         <div class="hero-buttons">
-            <a href="{{ url_for('order_certificate') }}" class="btn btn-primary">Заказать справку</a>
-            <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Мои справки</a>
+            <a href="{{ url_for('order_certificate') }}" class="btn btn-primary">{{ icon('plus', 18) }} Заказать справку</a>
+            <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">{{ icon('list', 18) }} Мои справки</a>
+        </div>
+        <div class="hero-meta">
+            <div><strong>1 минута</strong><span>на оформление заявки</span></div>
+            <div><strong>24/7</strong><span>проверка статуса</span></div>
+            <div><strong>3</strong><span>этапа до готовности</span></div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="features">
-    <div class="feature-card">
-        <h3>📋 Заказ справок</h3>
-        <p>Студенты могут легко заказать необходимые справки, указав все необходимые данные</p>
+<section class="section" aria-labelledby="features-title">
+    <div class="section-head">
+        <div>
+            <p class="section-kicker">Возможности</p>
+            <h2 id="features-title">Всё в одном месте</h2>
+            <p>Студенту — понятная заявка, секретариату — удобное управление.</p>
+        </div>
     </div>
-    <div class="feature-card">
-        <h3>⚡ Статус готовности</h3>
-        <p>Отслеживайте статус справки в реальном времени: "в работе", "готово" или "отклонено"</p>
+    <div class="features">
+        <article class="feature-card">
+            <span class="feature-icon">{{ icon('send', 22) }}</span>
+            <h3>Заказ за минуту</h3>
+            <p>Форма с подсказками и валидацией: ФИО, группа, дата рождения и место требования.</p>
+        </article>
+        <article class="feature-card">
+            <span class="feature-icon feature-icon--violet">{{ icon('clock', 22) }}</span>
+            <h3>Живой статус</h3>
+            <p>Наглядно видно, на каком этапе справка: в работе, готова или отклонена.</p>
+        </article>
+        <article class="feature-card">
+            <span class="feature-icon feature-icon--green">{{ icon('shield', 22) }}</span>
+            <h3>Без регистрации</h3>
+            <p>Студентам не нужен пароль. Панель управления закрыта для секретариата.</p>
+        </article>
     </div>
-    <div class="feature-card">
-        <h3>🔍 Мониторинг</h3>
-        <p>Секретари могут управлять статусами справок и отслеживать все заказы</p>
+</section>
+
+<section class="section" aria-labelledby="steps-title">
+    <div class="section-head">
+        <div>
+            <p class="section-kicker">Как это работает</p>
+            <h2 id="steps-title">Три шага</h2>
+        </div>
     </div>
-</div>
+    <div class="steps">
+        <article class="step">
+            <span class="step-index">1</span>
+            <h3>Заполните заявку</h3>
+            <p>Укажите данные и место, куда нужна справка.</p>
+        </article>
+        <article class="step">
+            <span class="step-index">2</span>
+            <h3>Дождитесь обработки</h3>
+            <p>Секретариат берёт заявку в работу — статус меняется на «В работе».</p>
+        </article>
+        <article class="step">
+            <span class="step-index">3</span>
+            <h3>Заберите справку</h3>
+            <p>Как только статус «Готово», справку можно получить в секретариате.</p>
+        </article>
+    </div>
+</section>
+
+<section class="cta-band" aria-label="Проверить статус">
+    <div>
+        <h2>Уже заказали справку?</h2>
+        <p>Проверьте готовность по номеру — без входа в личный кабинет.</p>
+    </div>
+    <div class="cta-band__actions">
+        <a href="{{ url_for('check_status') }}" class="btn btn-primary">{{ icon('search', 18) }} Проверить статус</a>
+        <a href="{{ url_for('secretary_login') }}" class="btn btn-secondary">{{ icon('lock', 18) }} Вход для секретаря</a>
+    </div>
+</section>
 {% endblock %}

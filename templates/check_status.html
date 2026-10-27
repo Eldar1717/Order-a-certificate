@@ -1,40 +1,71 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_macros.html" import status_badge, status_track, fmt_date %}
+
+{% block title %}Проверка статуса · Справки колледжа{% endblock %}
+{% block container_class %}container--narrow{% endblock %}
 
 {% block content %}
 <div class="check-status">
-    <h2>🔍 Проверить статус справки</h2>
-    
+    <div class="page-head">
+        <div>
+            <p class="section-kicker">Быстрая проверка</p>
+            <h1>{{ icon('search', 26) }} Проверить статус справки</h1>
+            <p class="page-description">Введите номер справки — он указан в подтверждении заказа.</p>
+        </div>
+    </div>
+
     <form method="GET" action="{{ url_for('check_status') }}" class="status-form">
         <div class="form-group">
-            <label for="certificate_id">Номер справки (ID):</label>
-            <input type="number" min= '1' id="certificate_id" name="id"
+            <label for="certificate_id">Номер справки (ID)</label>
+            <input type="number" min="1" id="certificate_id" name="id"
                    value="{{ request.args.get('id', '') }}"
-                   placeholder="Введите номер справки" required>
-            <small>Номер справки можно найти в подтверждении заказа</small>
+                   placeholder="Например, 42" inputmode="numeric" required>
+            <span class="hint">Номер выдаётся автоматически после оформления заявки</span>
         </div>
-        <button type="submit" class="btn btn-primary">Проверить статус</button>
+        <button type="submit" class="btn btn-primary">{{ icon('search', 18) }} Проверить статус</button>
     </form>
 
     {% if certificate %}
     <div class="certificate-status">
-        <div class="status-card status-{{ certificate.status.replace(' ', '-') }}">
-            <h3>Справка #{{ certificate.id }}</h3>
+        <div class="status-card" data-status="{{ certificate.status }}">
+            <div class="status-card__head">
+                <h3>Справка #{{ certificate.id }}</h3>
+                {{ status_badge(certificate.status) }}
+            </div>
+
+            {{ status_track(certificate.status) }}
+
             <div class="status-info">
-                <p><strong>Статус:</strong> <span class="status-badge">{{ certificate.status }}</span></p>
-                <p><strong>Студент:</strong> {{ certificate.student_name }}</p>
-                <p><strong>Группа:</strong> {{ certificate.student_group }}</p>
-                <p><strong>Дата рождения:</strong> {{ certificate.birth_date }}</p>
-                <p><strong>Место требования:</strong> {{ certificate.request_place }}</p>
-                <p><strong>Количество:</strong> {{ certificate.quantity }} шт.</p>
-				<p><strong>Дата заказа:</strong> {{ certificate.created_at }}</p>
-				<p><strong>Последнее обновление:</strong> {{ certificate.updated_at }}</p>
+                <p><strong>Студент</strong>{{ certificate.student_name }}</p>
+                <p><strong>Группа</strong>{{ certificate.student_group }}</p>
+                <p><strong>Дата рождения</strong>{{ fmt_date(certificate.birth_date) }}</p>
+                <p><strong>Место требования</strong>{{ certificate.request_place }}</p>
+                <p><strong>Количество</strong>{{ certificate.quantity }} шт.</p>
+                <p><strong>Дата заказа</strong>{{ certificate.created_at }}</p>
+                <p><strong>Последнее обновление</strong>{{ certificate.updated_at }}</p>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary btn-small">{{ icon('list', 16) }} Все справки</a>
+                <button type="button" class="btn btn-ghost btn-small" onclick="window.print()">{{ icon('printer', 16) }} Распечатать</button>
             </div>
         </div>
     </div>
     {% elif request.args.get('id') %}
-    <div class="alert alert-error">
-        <h3>Справка не найдена</h3>
-        <p>Справка с номером {{ request.args.get('id') }} не найдена. Проверьте правильность номера.</p>
+    <div class="alert alert-error" role="alert">
+        {{ icon('alert', 20) }}
+        <div>
+            <h3>Справка не найдена</h3>
+            <p>Справки с номером {{ request.args.get('id') }} нет в системе. Проверьте номер и попробуйте снова.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state__icon">{{ icon('hash', 30) }}</div>
+        <h3>Нужен номер справки</h3>
+        <p>Он отображается в подтверждении заказа и в списке «Мои справки».</p>
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Открыть мои справки</a>
     </div>
     {% endif %}
 </div>

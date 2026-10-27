@@ -1,3 +1,10 @@
 .git
 .idea
-__pycache__
+.vscode
+__pycache__/
+*.pyc
+.venv/
+venv/
+instance/
+*.db
+.DS_Store
