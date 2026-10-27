@@ -47,6 +47,8 @@
             </div>
 
             <div class="form-actions">
+                <button type="button" class="btn btn-secondary btn-small"
+                        onclick="copyText('{{ certificate.id }}', 'Номер справки')">{{ icon('copy', 16) }} Копировать номер</button>
                 <a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary btn-small">{{ icon('list', 16) }} Все справки</a>
                 <button type="button" class="btn btn-ghost btn-small" onclick="window.print()">{{ icon('printer', 16) }} Распечатать</button>
             </div>

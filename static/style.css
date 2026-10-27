@@ -363,6 +363,29 @@ img, svg {
     opacity: .6;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
+}
+
+.btn.is-loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .45);
+    border-top-color: #fff;
+    animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ---------- Hero ---------- */
@@ -1045,6 +1068,30 @@ img, svg {
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow);
+}
+
+/* KPI-карточки в панели секретаря работают как фильтры */
+.stat-card[role="button"] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.stat-card[role="button"]:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+}
+
+.stat-card.is-active {
+    border-color: #bcd0f7;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12), var(--shadow);
+}
+
+.stat-card.is-active h3 {
+    color: var(--brand-dark);
+}
+
+.stat-card.is-active span {
+    color: var(--ink);
 }
 
 .stat-card::after {
@@ -1746,6 +1793,8 @@ img, svg {
 .cert-number {
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: .6rem;
     margin: 1.35rem auto;
     padding: .7rem 1.2rem;
@@ -1755,6 +1804,19 @@ img, svg {
     color: var(--brand-ink);
     font-size: .85rem;
     font-weight: 500;
+}
+
+.cert-number__label {
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.cert-number__copy {
+    margin-left: .35rem;
+    background: #fff;
 }
 
 .cert-number strong {

@@ -12,8 +12,12 @@
 
     {% if certificate_id %}
     <div class="cert-number">
-        Номер справки
+        <span class="cert-number__label">Номер справки</span>
         <strong>#{{ certificate_id }}</strong>
+        <button type="button" class="btn btn-secondary btn-small cert-number__copy"
+                onclick="copyText('{{ certificate_id }}', 'Номер справки')">
+            {{ icon('copy', 16) }} Копировать
+        </button>
     </div>
     <p class="text-muted text-small">Сохраните номер — по нему можно проверить статус в любой момент.</p>
     {% endif %}

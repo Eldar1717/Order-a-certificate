@@ -1,7 +1,32 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
+import os
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # Python < 3.9
+    ZoneInfo = None
 
 db = SQLAlchemy()
+
+# Время в БД хранится в UTC, а показываем его в часовом поясе колледжа.
+APP_TZ = os.environ.get('APP_TZ', 'Europe/Moscow')
+
+try:
+    LOCAL_TZ = ZoneInfo(APP_TZ) if ZoneInfo else None
+except Exception:
+    LOCAL_TZ = None
+
+
+def fmt_dt(value):
+    """UTC из базы → локальное время в формате ДД.ММ.ГГГГ ЧЧ:ММ."""
+    if not value:
+        return ''
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    if LOCAL_TZ:
+        value = value.astimezone(LOCAL_TZ)
+    return value.strftime('%d.%m.%Y %H:%M')
 
 class Certificate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,6 +50,6 @@ class Certificate(db.Model):
             'quantity': self.quantity,
             'comment': self.comment,
             'status': self.status,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'),
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': fmt_dt(self.created_at),
+            'updated_at': fmt_dt(self.updated_at)
         }

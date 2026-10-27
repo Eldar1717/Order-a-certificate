@@ -21,7 +21,7 @@
             <p>Поля со звёздочкой обязательны.</p>
         </div>
 
-        <form method="POST" novalidate>
+        <form method="POST" id="orderForm" novalidate>
             <div class="form-grid">
                 <div class="form-group form-group--full">
                     <label for="student_name">ФИО студента <span class="req">*</span></label>
@@ -60,7 +60,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{{ icon('send', 18) }} Отправить заявку</button>
+                <button type="submit" class="btn btn-primary" id="orderSubmit">{{ icon('send', 18) }} Отправить заявку</button>
                 <a href="{{ url_for('index') }}" class="btn btn-ghost">Отмена</a>
                 <span class="note">Заявка не требует регистрации</span>
             </div>
@@ -80,4 +80,33 @@
     </aside>
 </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const form = document.getElementById('orderForm');
+    const submit = document.getElementById('orderSubmit');
+    if (!form || !submit) return;
+
+    // Проверяем поля до отправки: подсвечиваем первое проблемное и не уходим со страницы
+    form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+        submit.disabled = true;
+        submit.textContent = 'Отправка…';
+        submit.classList.add('is-loading');
+    });
+
+    // Дата рождения не может быть в будущем
+    const birth = document.getElementById('birth_date');
+    if (birth) {
+        const today = new Date().toISOString().slice(0, 10);
+        birth.max = today;
+    }
+})();
+</script>
 {% endblock %}
