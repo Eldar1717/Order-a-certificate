@@ -8,3 +8,4 @@ venv/
 instance/
 *.db
 .DS_Store
+scripts/logs/

@@ -2,17 +2,44 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from database import db
 from database import Certificate  # Правильный импорт
 from datetime import datetime
+import logging
 import os
 
+import server_control
+
+logging.basicConfig(
+    level=os.environ.get('LOG_LEVEL', 'INFO').upper(),
+    format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+)
+log = logging.getLogger('app')
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///certificates.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL', 'sqlite:///certificates.db'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 
 # Секретный ключ для доступа секретаря
-SECRETARY_PASSWORD = 'secret123'
+SECRETARY_PASSWORD = os.environ.get('SECRETARY_PASSWORD', 'secret123')
+
+if app.config['SECRET_KEY'] == 'your-secret-key-here':
+    log.warning('SECRET_KEY не задан — задайте переменную окружения SECRET_KEY')
+if SECRETARY_PASSWORD == 'secret123':
+    log.warning('Используется пароль секретаря по умолчанию — задайте SECRETARY_PASSWORD')
 
 db.init_app(app)
+
+with app.app_context():
+    try:
+        db.create_all()
+    except Exception as exc:  # noqa: BLE001 - приложение должно подняться и показать ошибку
+        log.exception('Не удалось создать таблицы: %s', exc)
+
+server_control.mark_started()
+log.info('Приложение запущено, pid=%s, режим перезапуска=%s',
+         os.getpid(), server_control.RESTART_MODE)
+
 
 def is_secretary():
     """Проверяет, вошел ли пользователь как секретарь"""
@@ -189,7 +216,104 @@ def check_status():
     certificate_data = certificate.to_dict() if certificate else None
     return render_template('check_status.html', certificate=certificate_data)
 
+# --------------------------------------------------------------------------- #
+# Диагностика и удалённое управление сервером
+# --------------------------------------------------------------------------- #
+
+def _check_database():
+    """Лёгкая проверка БД: не тянет данные, только соединение."""
+    try:
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+        return True, None
+    except Exception as exc:  # noqa: BLE001 - любую ошибку показываем в статусе
+        db.session.rollback()
+        return False, str(exc)[:300]
+
+
+def _request_token():
+    token = request.args.get('token')
+    if not token:
+        token = request.headers.get('X-Restart-Token')
+    if not token:
+        data = request.get_json(silent=True)
+        if isinstance(data, dict):
+            token = data.get('token')
+    return token
+
+
+@app.route('/healthz')
+def healthz():
+    """Health-check для watchdog-скрипта и панели секретаря."""
+    db_ok, db_error = _check_database()
+    payload = server_control.status_payload(db_ok, db_error)
+    response = jsonify(payload)
+    response.status_code = 200 if db_ok else 503
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/admin/status')
+def api_admin_status():
+    """Расширенный статус: доступен секретарю или по токену."""
+    if not server_control.is_authorized(_request_token()):
+        return jsonify({'error': 'Доступ запрещён'}), 403
+
+    db_ok, db_error = _check_database()
+    payload = server_control.status_payload(db_ok, db_error)
+    payload['secretary_password_is_default'] = SECRETARY_PASSWORD == 'secret123'
+    response = jsonify(payload)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/admin/restart', methods=['POST'])
+def api_admin_restart():
+    """Запрос на перезапуск.
+
+    Приложение отвечает на запрос и завершается через несколько секунд —
+    поднять его заново должна служба Windows или watchdog-скрипт.
+    """
+    if not server_control.is_authorized(_request_token()):
+        log.warning('Отклонён запрос перезапуска без прав доступа')
+        return jsonify({'error': 'Доступ запрещён'}), 403
+
+    data = request.get_json(silent=True)
+    reason = ''
+    if isinstance(data, dict):
+        reason = data.get('reason') or ''
+    reason = (reason or request.form.get('reason') or '')[:200]
+
+    by = 'секретарь' if session.get('role') == 'secretary' else 'токен'
+    ok, message = server_control.schedule_restart(reason or 'вручную', by)
+
+    return jsonify({
+        'ok': ok,
+        'message': message,
+        'restart_mode': server_control.RESTART_MODE,
+        'exit_in_seconds': server_control.RESTART_DELAY,
+        'reason': reason or 'вручную',
+    }), (200 if ok else 409)
+
+
+@app.route('/admin')
+def admin_server():
+    """Страница аварийного перезапуска по токену — открывается с телефона."""
+    token = request.args.get('token', '')
+    allowed = server_control.is_authorized(token)
+    db_ok, db_error = _check_database()
+    return render_template(
+        'admin_server.html',
+        allowed=allowed,
+        token=token,
+        token_enabled=server_control.token_enabled(),
+        status=server_control.status_payload(db_ok, db_error),
+    ), (200 if allowed else 403)
+
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, host='0.0.0.0')
+    app.run(
+        debug=os.environ.get('FLASK_DEBUG') == '1',
+        host='0.0.0.0',
+        port=int(os.environ.get('PORT', '5000')),
+    )
