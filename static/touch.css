@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Сенсорный режим и киоск: крупные цели, отклик на касание, без «залипающих» hover
+   ========================================================================== */
+
+/* Касания без задержки 300 мс и без подсветки «синим» */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"] {
+    touch-action: manipulation;
+}
+
+html {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+}
+
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* --------------------------------------------------------------------------
+   Пальцевые размеры: всё интерактивное не меньше 44–48 px
+   -------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+    body {
+        font-size: 17px;
+    }
+
+    .container {
+        padding: 0 clamp(16px, 2.4vw, 32px);
+    }
+
+    /* Кнопки */
+    .btn {
+        min-height: 50px;
+        padding: .8rem 1.4rem;
+        font-size: 1rem;
+        border-radius: 12px;
+    }
+
+    .btn-small {
+        min-height: 44px;
+        padding: .55rem 1rem;
+        font-size: .92rem;
+    }
+
+    .btn svg,
+    .btn-small svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    /* Навигация */
+    .nav-menu a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 46px;
+        padding: .55rem 1rem;
+        font-size: .95rem;
+    }
+
+    .nav-logo {
+        min-height: 46px;
+    }
+
+    /* Поля ввода: не меньше 52 px и шрифт 16px+, чтобы не было автозума */
+    .form-group input,
+    .form-group textarea,
+    .form-group select,
+    .filters input,
+    .filters select,
+    .status-form input {
+        min-height: 54px;
+        padding: .85rem 1rem;
+        font-size: 1rem;
+        border-radius: 12px;
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+    }
+
+    /* Мелкие стрелки у number на сенсоре бесполезны — есть цифровой блок на клавиатуре */
+    .form-group input[type="number"]::-webkit-outer-spin-button,
+    .form-group input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .form-group input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .form-group label {
+        font-size: .95rem;
+    }
+
+    .form-group .hint {
+        font-size: .85rem;
+    }
+
+    /* Селект статуса в таблице */
+    .status-select {
+        min-height: 46px;
+        padding: .55rem 2.2rem .55rem .75rem;
+        font-size: .95rem;
+    }
+
+    /* Фильтры и поиск */
+    .filters {
+        padding: 1.15rem;
+        gap: 1rem;
+    }
+
+    .search-form {
+        gap: .75rem;
+    }
+
+    .search-input-wrap svg {
+        width: 19px;
+        height: 19px;
+        left: .9rem;
+    }
+
+    .search-input-wrap input {
+        padding-left: 2.6rem;
+    }
+
+    /* Форма заявки: кнопки на всю ширину, чтобы не промахнуться */
+    .form-actions {
+        gap: .75rem;
+    }
+
+    .form-actions .btn {
+        flex: 1 1 auto;
+        min-width: 180px;
+    }
+
+    .form-actions .note {
+        flex: 1 1 100%;
+        margin-left: 0;
+        text-align: center;
+    }
+
+    /* Карточки и таблица */
+    .stat-card {
+        padding: 1.15rem 1.3rem;
+        min-height: 96px;
+    }
+
+    .certificates-table tbody td {
+        padding: 1rem;
+        font-size: .95rem;
+    }
+
+    .certificates-table thead th {
+        padding: .9rem 1rem;
+    }
+
+    .status-badge {
+        padding: .34rem .8rem;
+        font-size: .84rem;
+    }
+
+    .certificate-info p {
+        font-size: .95rem;
+    }
+
+    /* Трекер этапов крупнее */
+    .status-track {
+        padding: .7rem .8rem;
+    }
+
+    .status-track .track-step {
+        font-size: .78rem;
+    }
+
+    /* Кликабельные KPI-карточки */
+    .stat-card[role="button"] {
+        min-height: 104px;
+    }
+
+    /* Кнопка копирования и «распечатать» */
+    .cert-number__copy {
+        min-height: 46px;
+    }
+
+    /* Тосты крупнее и выше клавиатуры */
+    .toast {
+        padding: 1rem 1.1rem;
+        font-size: .95rem;
+    }
+
+    .toast-stack {
+        bottom: calc(20px + var(--vk-height, 0px));
+        transition: bottom .18s ease;
+    }
+
+    /* Модальная кнопка «наверх» не нужна, но якоря скролла делаем заметнее */
+    .skip-link:focus {
+        padding: .9rem 1.1rem;
+    }
+}
+
+/* Большой сенсорный монитор — чуть крупнее базовый кегль и шире контейнер */
+@media (pointer: coarse) and (min-width: 1400px) {
+    body {
+        font-size: 18px;
+    }
+
+    .container {
+        max-width: 1320px;
+    }
+
+    .certificates-list {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Устройства без hover: убираем «подпрыгивание», оставляем цвет и тень
+   -------------------------------------------------------------------------- */
+@media (hover: none) {
+    .btn:hover,
+    .feature-card:hover,
+    .stat-card:hover,
+    .certificate-card:hover {
+        transform: none;
+    }
+
+    /* Вместо hover — явный отклик на нажатие */
+    .btn:active {
+        transform: scale(.985);
+        filter: brightness(.96);
+    }
+
+    .feature-card:active,
+    .certificate-card:active {
+        border-color: #cdd9ef;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-card[role="button"]:active {
+        background: #f8fbff;
+        border-color: #bcd0f7;
+    }
+
+    .nav-menu a:active {
+        background: var(--brand-soft);
+        color: var(--brand-dark);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Киоск: не даём выделять «хром» интерфейса, но оставляем текст в полях
+   -------------------------------------------------------------------------- */
+.kiosk-ui .navbar,
+.kiosk-ui .footer,
+.kiosk-ui .status-badge,
+.kiosk-ui .track-step,
+.kiosk-ui .btn,
+.kiosk-ui .stat-card,
+.kiosk-ui .page-head,
+.kiosk-ui .section-kicker {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.kiosk-ui input,
+.kiosk-ui textarea,
+.kiosk-ui .certificate-info,
+.kiosk-ui .status-info {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* Режим киоска (?kiosk=1): без выделения, без контекстного меню, без «резинки» */
+.kiosk-mode {
+    overscroll-behavior: none;
+}
+
+.kiosk-mode .navbar,
+.kiosk-mode .footer,
+.kiosk-mode .hero,
+.kiosk-mode .features,
+.kiosk-mode .steps,
+.kiosk-mode .cta-band,
+.kiosk-mode .page-description,
+.kiosk-mode .section-kicker {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Скрываем курсор-«текстовую палочку» у неинтерактивных зон на сенсоре */
+@media (pointer: coarse) {
+    body {
+        cursor: default;
+    }
+}

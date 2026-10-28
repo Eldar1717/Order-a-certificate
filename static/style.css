@@ -1883,6 +1883,61 @@ img, svg {
     color: #fff;
 }
 
+.footer__vk {
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    color: #94a3b8;
+    background: none;
+    border: none;
+    border-bottom: 1px dashed rgba(148, 163, 184, .45);
+    cursor: pointer;
+    transition: color .18s ease, border-color .18s ease;
+}
+
+.footer__vk:hover {
+    color: #fff;
+    border-bottom-color: #fff;
+}
+
+/* Кнопка показа пароля */
+.password-wrap {
+    position: relative;
+}
+
+.password-wrap input {
+    padding-right: 3.1rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: .45rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 38px;
+    padding: .25rem;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+
+.password-toggle:hover {
+    color: var(--ink);
+    background: #eef2f8;
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
 .footer__note {
     width: 100%;
     margin: 0;
