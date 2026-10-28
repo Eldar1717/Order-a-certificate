@@ -31,7 +31,14 @@
             {% for dev in developers %}
             <li class="team-card">
                 <div class="team-card__media">
-                    {% if dev.animation %}
+                    {% if dev.video %}
+                        {# mp4/webm: автозапуск без звука в цикле, фото — постер и запасной вариант #}
+                        <video src="{{ url_for('static', filename=dev.video) }}"
+                               {% if dev.photo %}poster="{{ url_for('static', filename=dev.photo) }}"{% endif %}
+                               autoplay muted loop playsinline preload="metadata"
+                               disablepictureinpicture
+                               aria-label="Видео: {{ dev.name }}"></video>
+                    {% elif dev.animation %}
                         <img src="{{ url_for('static', filename=dev.animation) }}"
                              alt="Анимация: {{ dev.name }}" loading="lazy">
                     {% else %}

@@ -6,8 +6,15 @@
     position: fixed;
     inset: 0;
     z-index: 340;
+    /* Фолбэк для браузеров без grid: тот же порядок и те же ограничения */
     display: flex;
     flex-direction: column;
+    /* Основная раскладка: шапка / контент / футер, контент сжимается */
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: clamp(.6rem, 2vh, 1.6rem);
+    align-items: stretch;
+    overflow: hidden;
     padding: clamp(1.25rem, 3vw, 2.75rem) clamp(1.25rem, 4vw, 3.5rem)
              calc(clamp(1.25rem, 3vw, 2.5rem) + env(safe-area-inset-bottom, 0px));
     color: #e8efff;
@@ -71,6 +78,7 @@
 /* Верхняя строка: бренд и часы */
 .team-idle__top {
     position: relative;
+    flex: 0 0 auto;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -127,14 +135,15 @@
 /* Центральная часть */
 .team-idle__body {
     position: relative;
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: clamp(.5rem, 2vh, 1.5rem) 0;
+    padding: 0;
     min-height: 0;
+    overflow: hidden;   /* карточки не могут налезть на кнопку снизу */
 }
 
 .team-idle__kicker {
@@ -161,15 +170,21 @@
     justify-content: center;
     align-items: stretch;
     gap: clamp(1rem, 3vw, 2.25rem);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     width: 100%;
     max-width: 980px;
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 100%;
 }
 
 .team-card {
     position: relative;
-    flex: 1 1 260px;
+    flex: 1 1 0;
+    min-width: 0;
     max-width: 340px;
+    min-height: 0;
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -193,18 +208,25 @@
 
 .team-card__media {
     position: relative;
-    aspect-ratio: 4 / 5;
+    flex: 1 1 auto;
+    min-height: 120px;
     overflow: hidden;
     background: #0b1428;
 }
 
-.team-card__media img {
+.team-card__media img,
+.team-card__media video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center 22%;
     display: block;
     transition: transform 8s ease;
+}
+
+/* Автоплей-видео: не даём браузеру показать «пустое» полотно до первого кадра */
+.team-card__media video {
+    background: #0b1428;
 }
 
 .team-idle:not([hidden]) .team-card__media img {
@@ -230,7 +252,8 @@
 }
 
 .team-card__info {
-    padding: 1rem 1.15rem 1.15rem;
+    flex: 0 0 auto;
+    padding: .9rem 1.1rem 1.05rem;
 }
 
 .team-card__info h2 {
@@ -275,10 +298,12 @@
 /* Нижняя часть: кнопка и подсказка */
 .team-idle__foot {
     position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: .7rem;
+    gap: .55rem;
 }
 
 .team-idle__start {
@@ -329,6 +354,86 @@
     .team-idle__start {
         min-height: 64px;
         font-size: 1.1rem;
+    }
+}
+
+@media (min-width: 1500px) and (min-height: 900px) {
+    .team-cards {
+        max-width: 1080px;
+    }
+
+    .team-card {
+        max-width: 380px;
+    }
+}
+
+/* Невысокие экраны (ноутбук, окно в половину экрана): сжимаем всё, чтобы
+   карточки, кнопка и подсказка помещались без наложений */
+@media (max-height: 860px) {
+    .team-idle {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        gap: .5rem;
+    }
+
+    .team-idle__brand span {
+        display: none;
+    }
+
+    .team-idle__mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+    }
+
+    .team-idle__kicker {
+        margin-bottom: .35rem;
+        font-size: .72rem;
+    }
+
+    .team-idle__title {
+        font-size: clamp(1.15rem, 2.4vw, 1.75rem);
+        margin-bottom: .9rem;
+    }
+
+    .team-card__info {
+        padding: .7rem .9rem .8rem;
+    }
+
+    .team-card__info h2 {
+        font-size: 1rem;
+    }
+
+    .team-card__role {
+        margin-bottom: .5rem;
+        font-size: .78rem;
+    }
+
+    .team-card__tg {
+        padding: .35rem .7rem;
+        font-size: .8rem;
+    }
+
+    .team-idle__start {
+        min-height: 50px;
+        padding: .7rem 1.6rem;
+        font-size: .98rem;
+    }
+
+    .team-idle__hint {
+        font-size: .82rem;
+    }
+}
+
+/* Совсем низкий экран: убираем заголовок, оставляем только карточки и кнопку */
+@media (max-height: 640px) {
+    .team-idle__title,
+    .team-idle__kicker {
+        display: none;
+    }
+
+    .team-card__media {
+        min-height: 90px;
     }
 }
 
