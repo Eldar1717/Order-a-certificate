@@ -23,6 +23,31 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
 # Секретный ключ для доступа секретаря
 SECRETARY_PASSWORD = os.environ.get('SECRETARY_PASSWORD', 'secret123')
 
+# --------------------------------------------------------------------------- #
+# Команда разработчиков для экрана ожидания (заставки киоска)
+# --------------------------------------------------------------------------- #
+# Чтобы поставить гифку вместо фото, положите файл в static/team/ и укажите
+# его в поле 'animation'. Поле 'photo' остаётся как запасное изображение.
+DEVELOPERS = [
+    {
+        'name': 'Эльдар',
+        'role': 'Разработчик · интерфейс',
+        'telegram': 'eldarik17',
+        'photo': 'team/eldar.jpg',
+        'animation': None,
+    },
+    {
+        'name': 'Азим',
+        'role': 'Разработчик · серверная часть',
+        'telegram': 'Azim_4',
+        'photo': 'team/azim.jpg',
+        'animation': None,
+    },
+]
+
+# Через сколько секунд простоя показывать заставку (0 — выключить)
+IDLE_SCREEN_SECONDS = int(os.environ.get('IDLE_SCREEN_SECONDS', '45'))
+
 if app.config['SECRET_KEY'] == 'your-secret-key-here':
     log.warning('SECRET_KEY не задан — задайте переменную окружения SECRET_KEY')
 if SECRETARY_PASSWORD == 'secret123':
@@ -39,6 +64,15 @@ with app.app_context():
 server_control.mark_started()
 log.info('Приложение запущено, pid=%s, режим перезапуска=%s',
          os.getpid(), server_control.RESTART_MODE)
+
+
+@app.context_processor
+def inject_team():
+    """Данные заставки доступны всем шаблонам, показываются только студентам."""
+    return {
+        'developers': DEVELOPERS,
+        'idle_screen_seconds': IDLE_SCREEN_SECONDS,
+    }
 
 
 def is_secretary():
