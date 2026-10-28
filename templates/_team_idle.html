@@ -1,0 +1,71 @@
+{% from "_icons.html" import icon %}
+{#
+  Экран ожидания для студентов: заставка с командой разработчиков.
+  Появляется, когда киоск никто не трогает, и исчезает при касании.
+  Данные подставляются из DEVELOPERS в app.py — фото можно заменить на гифки,
+  указав поле `animation`.
+#}
+<div class="team-idle" id="teamIdle" hidden aria-hidden="true"
+     data-idle="{{ idle_screen_seconds }}" data-order-url="{{ url_for('order_certificate') }}">
+    <div class="team-idle__bg" aria-hidden="true"></div>
+
+    <header class="team-idle__top">
+        <div class="team-idle__brand">
+            <span class="team-idle__mark">{{ icon('doc', 22) }}</span>
+            <div>
+                <strong>Справки колледжа</strong>
+                <span>Система мониторинга готовности</span>
+            </div>
+        </div>
+        <div class="team-idle__clock">
+            <time id="teamIdleTime" datetime="">--:--</time>
+            <span id="teamIdleDate"></span>
+        </div>
+    </header>
+
+    <div class="team-idle__body">
+        <p class="team-idle__kicker">Над проектом работали</p>
+        <h1 class="team-idle__title">Сделано студентами<br>для студентов</h1>
+
+        <ul class="team-cards">
+            {% for dev in developers %}
+            <li class="team-card">
+                <div class="team-card__media">
+                    {% if dev.video %}
+                        {# mp4/webm: автозапуск без звука в цикле, фото — постер и запасной вариант #}
+                        <video src="{{ url_for('static', filename=dev.video) }}"
+                               {% if dev.photo %}poster="{{ url_for('static', filename=dev.photo) }}"{% endif %}
+                               autoplay muted loop playsinline preload="metadata"
+                               disablepictureinpicture
+                               aria-label="Видео: {{ dev.name }}"></video>
+                    {% elif dev.animation %}
+                        <img src="{{ url_for('static', filename=dev.animation) }}"
+                             alt="Анимация: {{ dev.name }}" loading="lazy">
+                    {% else %}
+                        <img src="{{ url_for('static', filename=dev.photo) }}"
+                             alt="Фото: {{ dev.name }}" loading="lazy">
+                    {% endif %}
+                    <span class="team-card__glow" aria-hidden="true"></span>
+                </div>
+                <div class="team-card__info">
+                    <h2>{{ dev.name }}</h2>
+                    <p class="team-card__role">{{ dev.role }}</p>
+                    <a class="team-card__tg" href="https://t.me/{{ dev.telegram }}"
+                       target="_blank" rel="noopener noreferrer">
+                        {{ icon('telegram', 18) }}
+                        <span>@{{ dev.telegram }}</span>
+                    </a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <footer class="team-idle__foot">
+        <button type="button" class="team-idle__start" data-idle-start>
+            {{ icon('arrow-right', 20) }}
+            <span>Заказать справку</span>
+        </button>
+        <p class="team-idle__hint">Коснитесь экрана, чтобы начать</p>
+    </footer>
+</div>

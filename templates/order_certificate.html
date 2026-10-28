@@ -1,40 +1,114 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Заказ справки · Справки колледжа{% endblock %}
+
 
 {% block content %}
-<div class="order-form">
-    <h2>Заказ справки</h2>
-    <form method="POST">
-        <div class="form-group">
-            <label for="student_name">ФИО студента:</label>
-            <input type="text" id="student_name" name="student_name" required>
+<div class="form-page">
+<div class="page-head">
+    <div>
+        <p class="section-kicker">Новая заявка</p>
+        <h1>{{ icon('doc', 26) }} Заказ справки</h1>
+        <p class="page-description">Заполните данные — заявка сразу попадёт в секретариат.</p>
+    </div>
+</div>
+
+<div class="form-layout">
+    <div class="form-card">
+        <div class="form-card__head">
+            <h2>Данные студента</h2>
+            <p>Поля со звёздочкой обязательны.</p>
         </div>
 
-        <div class="form-group">
-            <label for="student_group">Группа:</label>
-            <input type="text" id="student_group" name="student_group" required>
-        </div>
+        <form method="POST" id="orderForm" novalidate>
+            <div class="form-grid">
+                <div class="form-group form-group--full">
+                    <label for="student_name">ФИО студента <span class="req">*</span></label>
+                    <input type="text" id="student_name" name="student_name" required autocomplete="name"
+                           placeholder="Иванов Иван Иванович" minlength="3" maxlength="100">
+                </div>
 
-        <div class="form-group">
-            <label for="birth_date">Дата рождения:</label>
-            <input type="date" id="birth_date" name="birth_date" required>
-        </div>
+                <div class="form-group">
+                    <label for="student_group">Группа <span class="req">*</span></label>
+                    <input type="text" id="student_group" name="student_group" required
+                           placeholder="ИС-21" maxlength="10">
+                    <span class="hint">Например: ИС-21, БУ-19</span>
+                </div>
 
-        <div class="form-group">
-            <label for="request_place">Место требования справки:</label>
-            <input type="text" id="request_place" name="request_place" required>
-        </div>
+                <div class="form-group">
+                    <label for="birth_date">Дата рождения <span class="req">*</span></label>
+                    <input type="date" id="birth_date" name="birth_date" required>
+                </div>
 
-        <div class="form-group">
-            <label for="quantity">Количество справок:</label>
-            <input type="number" id="quantity" name="quantity" value="1" min="1" max="10" required>
-        </div>
+                <div class="form-group form-group--full">
+                    <label for="request_place">Место требования справки <span class="req">*</span></label>
+                    <input type="text" id="request_place" name="request_place" required maxlength="200"
+                           placeholder="Военкомат, банк, другое учебное заведение…">
+                </div>
 
-        <div class="form-group">
-            <label for="comment">Комментарий (необязательно):</label>
-            <textarea id="comment" name="comment" rows="3"></textarea>
-        </div>
+                <div class="form-group">
+                    <label for="quantity">Количество справок <span class="req">*</span></label>
+                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="10" required>
+                    <span class="hint">От 1 до 10 экземпляров</span>
+                </div>
 
-        <button type="submit" class="btn btn-primary">Заказать справку</button>
-    </form>
+                <div class="form-group">
+                    <label for="comment">Комментарий</label>
+                    <input type="text" id="comment" name="comment" maxlength="200" placeholder="Необязательно">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="orderSubmit">{{ icon('send', 18) }} Отправить заявку</button>
+                <a href="{{ url_for('index') }}" class="btn btn-ghost">Отмена</a>
+                <span class="note">Заявка не требует регистрации</span>
+            </div>
+        </form>
+    </div>
+
+    <aside class="info-panel" aria-labelledby="info-title">
+        <h3 id="info-title">{{ icon('info', 18) }} Что нужно знать</h3>
+        <ul class="info-list">
+            <li>{{ icon('check', 18) }}<span>ФИО указывайте полностью, как в документах.</span></li>
+            <li>{{ icon('check', 18) }}<span>Дата рождения нужна для идентификации в архиве.</span></li>
+            <li>{{ icon('check', 18) }}<span>Номер справки появится сразу после отправки — сохраните его.</span></li>
+            <li>{{ icon('check', 18) }}<span>Статус обновляет секретариат в рабочие дни.</span></li>
+        </ul>
+        <div class="divider"></div>
+        <p class="mini-note">Срок изготовления обычно 1–3 рабочих дня. Если справка нужна срочно — укажите это в комментарии.</p>
+    </aside>
+</div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const form = document.getElementById('orderForm');
+    const submit = document.getElementById('orderSubmit');
+    if (!form || !submit) return;
+
+    // Проверяем поля до отправки: подсвечиваем первое проблемное и не уходим со страницы
+    form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            form.reportValidity();
+            return;
+        }
+        submit.disabled = true;
+        submit.textContent = 'Отправка…';
+        submit.classList.add('is-loading');
+    });
+
+    // Дата рождения не может быть в будущем
+    const birth = document.getElementById('birth_date');
+    if (birth) {
+        const today = new Date().toISOString().slice(0, 10);
+        birth.max = today;
+    }
+})();
+</script>
+{% endblock %}
+
+{% block idle_screen %}{% include "_team_idle.html" %}{% endblock %}

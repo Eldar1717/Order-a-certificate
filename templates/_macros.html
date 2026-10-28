@@ -1,0 +1,37 @@
+{% from "_icons.html" import icon %}
+
+{% macro status_badge(status, cls='') -%}
+<span class="status-badge {{ cls }}" data-status="{{ status }}">{{ status|capitalize }}</span>
+{%- endmacro %}
+
+{% macro status_icon(status, size=20) -%}
+{%- if status == 'готово' -%}{{ icon('check-circle', size) }}
+{%- elif status == 'отклонено' -%}{{ icon('x-circle', size) }}
+{%- else -%}{{ icon('clock', size) }}{%- endif -%}
+{%- endmacro %}
+
+{# Прогресс по этапам: заказ → в работе → готово (или отклонено) #}
+{% macro status_track(status) -%}
+{%- set rejected = status == 'отклонено' -%}
+{%- set ready = status == 'готово' -%}
+<div class="status-track" aria-hidden="true">
+    <span class="track-step is-done">Заказ</span>
+    <span class="track-line{% if rejected or ready %} is-done{% endif %}"></span>
+    {%- if rejected %}
+    <span class="track-step is-current" data-tone="danger">Отклонено</span>
+    {%- else %}
+    <span class="track-step {% if status == 'в работе' %}is-current{% else %}is-done{% endif %}">В работе</span>
+    <span class="track-line{% if ready %} is-done{% endif %}"></span>
+    <span class="track-step {% if ready %}is-done{% endif %}">Готово</span>
+    {%- endif %}
+</div>
+{%- endmacro %}
+
+{# 2004-03-14 → 14.03.2004 #}
+{% macro fmt_date(value) -%}
+{%- if value and value|length >= 10 and value[4] == '-' -%}
+{{ value[8:10] }}.{{ value[5:7] }}.{{ value[0:4] }}
+{%- else -%}
+{{ value }}
+{%- endif -%}
+{%- endmacro %}

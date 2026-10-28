@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Сервер · Справки колледжа{% endblock %}
+{% block container_class %}container--narrow{% endblock %}
+
+{% block content %}
+<div class="server-page">
+    <div class="page-head">
+        <div>
+            <p class="section-kicker">Администрирование</p>
+            <h1>{{ icon('server', 26) }} Управление сервером</h1>
+            <p class="page-description">Диагностика и аварийный перезапуск приложения</p>
+        </div>
+    </div>
+
+    {% if not allowed %}
+    <div class="alert alert-error" role="alert">
+        {{ icon('alert', 20) }}
+        <div>
+            <h3>Доступ запрещён</h3>
+            {% if token_enabled %}
+            <p>Неверный или отсутствующий токен. Добавьте к адресу <code>?token=…</code>.</p>
+            {% else %}
+            <p>Удалённый доступ по токену не включён. Задайте переменную окружения
+               <code>RESTART_TOKEN</code> на сервере и перезапустите приложение,
+               либо войдите как секретарь.</p>
+            {% endif %}
+        </div>
+    </div>
+    <a href="{{ url_for('secretary_login') }}" class="btn btn-primary">{{ icon('lock', 18) }} Войти как секретарь</a>
+    {% else %}
+
+    <div class="stats" id="serverStats">
+        <div class="stat-card stat-card--total">
+            <h3>{{ icon('activity', 16) }} Состояние</h3>
+            <span id="serverHealth">—</span>
+        </div>
+        <div class="stat-card stat-card--ready">
+            <h3>{{ icon('clock', 16) }} Работает без сбоев</h3>
+            <span id="serverUptime" style="font-size:1.35rem;">—</span>
+        </div>
+        <div class="stat-card stat-card--work">
+            <h3>{{ icon('calendars', 16) }} Последний перезапуск</h3>
+            <span id="serverRestart" style="font-size:1rem;">—</span>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel__head">
+            <h2>{{ icon('database', 20) }} Подробности</h2>
+            <button type="button" class="btn btn-secondary btn-small" id="refreshStatus">{{ icon('rotate', 16) }} Обновить</button>
+        </div>
+        <dl class="kv">
+            <div><dt>PID процесса</dt><dd id="kvPid">—</dd></div>
+            <div><dt>Версия окружения</dt><dd id="kvEnv">—</dd></div>
+            <div><dt>База данных</dt><dd id="kvDb">—</dd></div>
+            <div><dt>Режим перезапуска</dt><dd id="kvMode">—</dd></div>
+            <div><dt>Запущено</dt><dd id="kvStarted">—</dd></div>
+            <div><dt>Кем запрошен</dt><dd id="kvBy">—</dd></div>
+            <div><dt>Причина</dt><dd id="kvReason">—</dd></div>
+        </dl>
+    </div>
+
+    <div class="panel panel--danger">
+        <div class="panel__head">
+            <h2>{{ icon('rotate', 20) }} Перезапуск приложения</h2>
+        </div>
+        <p class="panel__text">
+            Приложение корректно завершится и должно быть поднято службой Windows
+            или watchdog-скриптом. Все данные в базе сохраняются.
+            Незавершённые запросы будут прерваны — лучше делать это, когда
+            у киоска никого нет.
+        </p>
+        <div class="form-group">
+            <label for="restartReason">Причина перезапуска (для журнала)</label>
+            <input type="text" id="restartReason" maxlength="200" placeholder="Например: приложение не отвечает">
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-danger" id="restartBtn">{{ icon('rotate', 18) }} Перезапустить приложение</button>
+            <a href="{{ url_for('secretary_dashboard') }}" class="btn btn-ghost">К панели секретаря</a>
+        </div>
+    </div>
+
+    <div class="confirm-overlay" id="restartConfirm" hidden>
+        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <div class="confirm-dialog__icon">{{ icon('alert', 26) }}</div>
+            <h2 id="confirmTitle">Перезапустить приложение?</h2>
+            <p>Студенты и секретарь на несколько секунд потеряют доступ к системе.</p>
+            <div class="confirm-dialog__actions">
+                <button type="button" class="btn btn-secondary" id="confirmCancel">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmOk">Да, перезапустить</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if allowed %}
+<script>
+(function () {
+    const token = {{ token|tojson }};
+    const overlay = document.getElementById('restartConfirm');
+
+    const fmt = (value) => (value ? String(value).replace('T', ' ').slice(0, 16) : '—');
+
+    function render(data) {
+        document.getElementById('serverHealth').textContent =
+            data.status === 'ok' ? 'Работает' : 'Проблема';
+        document.getElementById('serverHealth').style.color =
+            data.status === 'ok' ? 'var(--green)' : 'var(--red)';
+        document.getElementById('serverUptime').textContent = data.uptime_human || '—';
+        document.getElementById('serverRestart').textContent =
+            data.last_restart_request_at ? fmt(data.last_restart_request_at) : 'не было';
+
+        document.getElementById('kvPid').textContent = data.pid ?? '—';
+        document.getElementById('kvEnv').textContent = data.app_env || '—';
+        document.getElementById('kvDb').textContent =
+            data.database === 'ok' ? 'подключена' : ('ошибка: ' + (data.database_error || ''));
+        document.getElementById('kvMode').textContent =
+            data.restart_mode === 'noop' ? 'noop (не завершает процесс)' : 'exit (через службу)';
+        document.getElementById('kvStarted').textContent = data.started_at_local || '—';
+        document.getElementById('kvBy').textContent = data.last_restart_by || '—';
+        document.getElementById('kvReason').textContent = data.last_restart_reason || '—';
+    }
+
+    function load() {
+        fetch('/api/admin/status?token=' + encodeURIComponent(token), { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+            .then(render)
+            .catch(error => window.showToast('Не удалось получить статус: ' + error.message, 'error'));
+    }
+
+    document.getElementById('refreshStatus').addEventListener('click', load);
+
+    document.getElementById('restartBtn').addEventListener('click', function () {
+        overlay.hidden = false;
+        document.getElementById('confirmOk').focus();
+    });
+
+    document.getElementById('confirmCancel').addEventListener('click', function () {
+        overlay.hidden = true;
+    });
+
+    overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) overlay.hidden = true;
+    });
+
+    document.getElementById('confirmOk').addEventListener('click', function () {
+        const button = this;
+        button.disabled = true;
+        button.textContent = 'Перезапуск…';
+
+        fetch('/api/admin/restart?token=' + encodeURIComponent(token), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: document.getElementById('restartReason').value || 'вручную со страницы сервера' })
+        })
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                overlay.hidden = true;
+                if (!ok) throw new Error(data.error || data.message || 'Ошибка');
+                window.showToast(data.message || 'Перезапуск запрошен', 'success');
+                showWaiting(data.exit_in_seconds || 2);
+            })
+            .catch(error => {
+                button.disabled = false;
+                button.textContent = 'Да, перезапустить';
+                window.showToast(error.message, 'error');
+            });
+    });
+
+    // После запроса сервер уходит в перезапуск: ждём, пока он снова ответит
+    function showWaiting(delaySeconds) {
+        const box = document.createElement('div');
+        box.className = 'confirm-overlay';
+        box.innerHTML = `
+            <div class="confirm-dialog" role="alert">
+                <div class="confirm-dialog__icon is-neutral"><span class="spinner"></span></div>
+                <h2>Сервер перезапускается</h2>
+                <p id="waitText">Ожидаем ответ приложения…</p>
+            </div>`;
+        document.body.appendChild(box);
+
+        const text = box.querySelector('#waitText');
+        let attempts = 0;
+        const started = Date.now();
+
+        setTimeout(poll, Math.max(1500, delaySeconds * 1000));
+
+        function poll() {
+            attempts += 1;
+            fetch('/healthz', { cache: 'no-store' })
+                .then(r => r.ok ? r.json() : Promise.reject(new Error('не отвечает')))
+                .then(() => {
+                    text.textContent = 'Сервер снова работает. Обновляем страницу…';
+                    setTimeout(() => location.reload(), 800);
+                })
+                .catch(() => {
+                    const seconds = Math.round((Date.now() - started) / 1000);
+                    text.textContent = `Ожидаем ответ приложения… ${seconds} с (попытка ${attempts})`;
+                    if (attempts < 60) {
+                        setTimeout(poll, 2000);
+                    } else {
+                        text.innerHTML = 'Приложение не поднялось за 2 минуты. ' +
+                            'Проверьте службу Windows или лог watchdog на сервере.';
+                    }
+                });
+        }
+    }
+
+    load();
+    setInterval(load, 30000);
+})();
+</script>
+{% endif %}
+{% endblock %}

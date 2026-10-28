@@ -1,12 +1,35 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
+
+{% block title %}Заявка создана · Справки колледжа{% endblock %}
+{% block container_class %}container--narrow{% endblock %}
 
 {% block content %}
 <div class="success-message">
-    <h2>✅ Заказ справки успешно создан!</h2>
-    <p>Ваша справка была успешно заказана. Вы можете отслеживать её статус на странице мониторинга.</p>
+    <div class="success-icon">{{ icon('check', 34) }}</div>
+    <h2>Заявка создана</h2>
+    <p>Справка передана в секретариат. Статус обновится, как только её возьмут в работу.</p>
+
+    {% if certificate_id %}
+    <div class="cert-number">
+        <span class="cert-number__label">Номер справки</span>
+        <strong>#{{ certificate_id }}</strong>
+        <button type="button" class="btn btn-secondary btn-small cert-number__copy"
+                onclick="copyText('{{ certificate_id }}', 'Номер справки')">
+            {{ icon('copy', 16) }} Копировать
+        </button>
+    </div>
+    <p class="text-muted text-small">Сохраните номер — по нему можно проверить статус в любой момент.</p>
+    {% endif %}
+
     <div class="success-buttons">
-        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary">Перейти к мониторингу</a>
-        <a href="{{ url_for('order_certificate') }}" class="btn btn-secondary">Заказать ещё одну справку</a>
+        <a href="{{ url_for('student_dashboard') }}" class="btn btn-primary">{{ icon('list', 18) }} К моим справкам</a>
+        {% if certificate_id %}
+            <a href="{{ url_for('check_status', id=certificate_id) }}" class="btn btn-secondary">{{ icon('search', 18) }} Проверить статус</a>
+        {% endif %}
+        <a href="{{ url_for('order_certificate') }}" class="btn btn-ghost">Заказать ещё</a>
     </div>
 </div>
 {% endblock %}
+
+{% block idle_screen %}{% include "_team_idle.html" %}{% endblock %}
